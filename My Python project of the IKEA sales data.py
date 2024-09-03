@@ -109,7 +109,10 @@ same_link = (description_duplicates.groupby(['name', 'price', 'old_price', 'desi
 
 # Sampling for exploratory analysis
 same_link_item_ids = same_link['item_id']
-data_with_ouliers = unique_data[~unique_data['item_id'].isin(same_link_item_ids)]
+analysis_data = unique_data[~unique_data['item_id'].isin(same_link_item_ids)]
+
+# Display the cleaned data in Markdown format
+print(analysis_data.to_markdown(index=False))
 
 # 7) Remove outliers
 # Price outliers
@@ -127,40 +130,10 @@ def remove_price_outliers(df):
     return df[(df['price'] >= lower_bound) & (df['price'] <= upper_bound)]
 
 # Remove outliers based on 'price' across the entire DataFrame
-data_without_price_outliers = remove_price_outliers(data_with_ouliers).copy()
-
-# Let's prepare the data set for estimating price correlation depending on size
-data_with_size_outliers = data_without_price_outliers[["price", "depth", "height", "width"]]
-data_with_size_outliers = data_with_size_outliers.dropna(subset=["depth", "height", "width"])
-
-numeric_columns = ['price', 'depth', 'height', 'width']
-
-# Remove outliers based on z-score
-z_scores = zscore(data_with_size_outliers[numeric_columns])
-abs_z_scores = np.abs(z_scores)
-outlier_indices = np.where(abs_z_scores > 3)[0]
-outliers = data_with_size_outliers.iloc[outlier_indices]
-
-# Remove size outliers
-size_outliers_index = outliers.index
-analysis_data = data_without_price_outliers[~data_without_price_outliers.index.isin(size_outliers_index)].copy()
+data_without_price_outliers = remove_price_outliers(analysis_data).copy()
 
 # Display the cleaned data in Markdown format
-print(analysis_data.to_markdown(index=False))
-
-"""
-The other variant
-# Calculate 'size' and find size outliers
-data_with_size_outliers['size'] = data_with_size_outliers['width'] * data_with_size_outliers["depth"] * data_with_size_outliers["height"]
-z_scores = zscore(data_with_size_outliers['size'])
-outliers = (z_scores > 3)
-print(data_with_size_outliers[outliers])
-
-# Remove size outliers
-size_outliers_index = data_with_size_outliers.index[outliers]
-analysis_data = data_without_price_outliers[~data_without_price_outliers.index.isin(size_outliers_index)].copy()
-print(analysis_data)
-"""
+print(data_without_price_outliers.to_markdown(index=False))
 
 # 2 Descriptive statistics
 ''' Perform exploratory analysis on a dataset including
@@ -292,33 +265,33 @@ model = smf.ols(formula=formula, data=analysis_data).fit()
 print(model.summary())
 
 ''' Result of multiple linear regression model using conventional method Ordinary Least Squares (OLS).
-    The dependent variable is “price” and the model includes 585 independent variables.
+    The dependent variable is “price” and the model includes 605 independent variables.
 
-    An R-square value of 0.541 indicates that the model explains 54.1% of the variance in the dependent variable.
-    The adjusted R-squared value of 0.41 is slightly lower, suggesting that some independent 
+    An R-square value indicates that the model explains 51.5% of the variance in the dependent variable.
+    The adjusted R-squared value is slightly lower, suggesting that some independent 
 variables may not contribute much to the explanatory power of the model.
-    The F-statistic of 4.131 and the associated p-value of 3.00e-124 suggest that the overall model is
+    The F-statistic of 4.023 and the associated p-value of 1.31e-127 suggest that the overall model is
 statistically significant.
-    The model includes 2633 observations and the log likelihood is -20091.
+    The model includes 2900 observations and the log likelihood is -24029.
     AIC and BIC are measures of model fit that take into account the number of parameters in the model.
-The lower the AIC and BIC values, the better the model fit. The AIC value is 4.135e+04 and the
-BIC is equal to 4.480e+04.
+The lower the AIC and BIC values, the better the model fit. The AIC value is 4.927e+04 and the
+BIC is equal to 5.289e+04.
     Finally, the "nonrobust" covariance type indicates that the standard errors of the coefficients are assumed
 homoscedastic (i.e. constant at all levels of independent variables) and normal distributed.
-    The omnibus test is a test of the normality of the residuals of a regression model. Value 351.686
+    The omnibus test is a test of the normality of the residuals of a regression model. Value 1095.226
 is the test statistic and the associated p-value is less than 0.05, as indicated by “Probability
 (omnibus): 0.000." This suggests that the residuals are not normally distributed, which may be the reason
 for concerns about model validity.
-    The Durbin-Watson test is a test of autocorrelation of residuals. A value of 1.862 indicates that
+    The Durbin-Watson test is a test of autocorrelation of residuals. A value of 1.81 indicates that
 there is some positive autocorrelation, although it is not strong enough to make model is invalid.
     The Jarque-Bera (JB) test is another test for the normality of residuals, and its statistical significance
-the test value of 795.834 and the associated p value of 0.00 indicate that the residuals are not distributed
+the test value of 9370.045 and the associated p value of 0.00 indicate that the residuals are not distributed
 Fine.
-    A skewness value of 0.781 suggests that the distribution of residuals is positively skewed,
-and the kurtosis value of 5.194 indicates that the distribution is heavy-tailed.
+    A skewness value of 1.552 suggests that the distribution of residuals is positively skewed,
+and the kurtosis value of 11.241 indicates that the distribution is heavy-tailed.
     The last line shows the condition number of the matrix of independent variables. High number
 conditionality indicates that the model may have problems with multicollinearity, which may
-make the coefficients difficult to interpret. The value of 1.25e+03 is relatively low, which indicates that
+make the coefficients difficult to interpret. The value of 1.33e+03 is relatively low, which indicates that
 that multicollinearity may not be a significant problem in this model. '''
 
 # 2.2 Prices and designers
@@ -415,33 +388,33 @@ model = smf.ols(formula=formula, data=digit_designer_data).fit()
 print(model.summary())
 
 ''' Result of multiple linear regression model using conventional method Ordinary Least Squares (OLS).
-    The model includes 182 predictor variables and one dependent variable (price).
+    The model includes 196 predictor variables and one dependent variable (price).
 
-    The R-squared value of the model is 0.394, which means that approximately 39.4% of the variance in the dependent
+    The R-squared value of the model is 0.448, which means that approximately 44.8% of the variance in the dependent
 variable can be explained by the predictor variables in the model.
-    The adjusted R-squared value is 0.347, which takes into account the number of predictor variables
+    The adjusted R-squared value is 0.407, which takes into account the number of predictor variables
 in the model and adjusts the R-squared value accordingly.
-    The F-statistic is 8.386 with a corresponding probability value (Prob) of 7.78e-153.
+    The F-statistic is 10.79 with a corresponding probability value (Prob) of 7.46e-219.
     This indicates that there is strong evidence that at least one of the predictor variables
 significantly associated with the dependent variable.
-    The log likelihood value of the model is -19684, which is used to compare models
+    The log likelihood value of the model is -23395, which is used to compare models
 and assessment of their compliance.
     Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC) also help
 compare the current model with others.
     It is important to note that the covariance type is unstable, meaning that the model is sensitive to outliers.
-    Omnibus Test - A value of 546.723 indicates that the residuals are not normally distributed,
+    Omnibus Test - A value of 1331.561 indicates that the residuals are not normally distributed,
 with a corresponding probability value (Prob(Omnibus)) of 0.000. This violates one of the assumptions
 linear regression models and may affect the reliability of the results.
-    The Durbin-Watson statistic is a test for the presence of autocorrelation in the residuals. Value 1.804
+    The Durbin-Watson statistic is a test for the presence of autocorrelation in the residuals. Value 1.817
 indicates that there may be some positive autocorrelation in the residuals, but not that much
 serious enough to invalidate the results.
     The Jarque-Bera (JB) test is another test of normality, but it takes into account both skewness and kurtosis.
-A value of 1148.568 and a probability (Prob(JB)) of 3.91e-250 indicate that the residuals are not normally distributed,
+A value of 10710.006 and a probability (Prob(JB)) of 0.00 indicate that the residuals are not normally distributed,
 which confirms the results of the Omnibus test.
-    A skewness value of 1.248 indicates that the distribution of residuals has a positive
-skewness, and the kurtosis value of 5.158 indicates that the distribution has heavy tails
+    A skewness value of 2.092 indicates that the distribution of residuals has a positive
+skewness, and the kurtosis value of 11.623 indicates that the distribution has heavy tails
 and is more peaked than the normal distribution.
-    Condition number (Cond. No.) 135 is a measure of multicollinearity in the model. Higher value
+    Condition number (Cond. No.) 146 is a measure of multicollinearity in the model. Higher value
 indicates a high degree of multicollinearity, which may make it difficult to interpret individual
 coefficients However, a value of 146 suggests that multicollinearity is not severe
 problem in this model. '''
@@ -547,21 +520,22 @@ plt.subplots_adjust(bottom=0.32, left=0.1)
 plt.show()
 
 # Statistical analysis using OLS regression
-formula = "price ~ category"
+formula = "price ~ C(category)"
+model = smf.ols(formula=formula, data=analysis_data).fit()
 print(model.summary())
 
 ''' Result of multiple linear regression model using conventional method
 Ordinary Least Squares (OLS).
     The model includes 16 predictor variables and one dependent variable (price).
 
-    The R-squared value of the model is 0.144, which means that approximately 14.4% of the variance in the dependent
+    The R-squared value of the model is 0.159, which means that approximately 15.9% of the variance in the dependent
 variable can be explained by the predictor variables in the model.
-    The adjusted R-squared value is 0.138, which takes into account the number
+    The adjusted R-squared value is 0.154, which takes into account the number
 predictor variables in the model and adjusts the R-squared value accordingly.
-    The F-statistic is 27.45 with a corresponding probability value (Prob) of 1.23e-76. This indicates
+    The F-statistic is 34.05 with a corresponding probability value (Prob) of 3.08e-96. This indicates
 there is strong evidence that at least one of the predictor variables is significantly
 associated with the dependent variable.
-    The log likelihood value of the model is -20913, which is used for comparison
+    The log likelihood value of the model is -24827, which is used for comparison
 models and assessment of their compliance. Akaike Information Criterion (AIC) and Bayesian Information Criterion
 criterion (BIC) also help to compare the current model with others.
     The covariance type is unreliable, which means the model is sensitive to outliers and influential observations.
@@ -570,37 +544,35 @@ are strong predictors of the dependent variable. The F-statistic is significant,
 that there is a significant relationship between the predictor variables and the dependent variable,
 but the effect size is relatively small.
     The omnibus test is a test of the normality assumption of residuals in a linear regression model.
-A value of 495.627 indicates that the residuals are not normally distributed, with a corresponding value
+A value of 1299.027 indicates that the residuals are not normally distributed, with a corresponding value
 probability (Prob(Omnibus)) equal to 0.000. This violates one of the assumptions of the linear regression model and
 may affect the reliability of the results.
-    The Durbin-Watson statistic is a test for the presence of autocorrelation in the residuals. Value 1.728
+    The Durbin-Watson statistic is a test for the presence of autocorrelation in the residuals. Value 1.708
 indicates that there may be some positive autocorrelation in the residuals, but not that much
 serious enough to invalidate the results.
     The Jarque-Bera (JB) test is another test of normality, but it takes into account both skewness and kurtosis.
-A value of 837.399 and a probability (Prob(JB)) of 1.45e-182 indicate that the residuals are not normally distributed,
+A value of 7022.093 and a probability (Prob(JB)) of 0.00 indicate that the residuals are not normally distributed,
 which confirms the results of the omnibus test.
-    A skewness value of 1.233 indicates that the distribution of residuals is positively skewed,
-and a kurtosis value of 4.245 indicates that the distribution is more peaked than normal
+    A skewness value of 2.101 indicates that the distribution of residuals is positively skewed,
+and a kurtosis value of 9.36 indicates that the distribution is more peaked than normal
 distribution.
-    The condition number (Cond. No.) of 33.8 is a measure of multicollinearity in the model.
+    The condition number (Cond. No.) of 35.5 is a measure of multicollinearity in the model.
 A higher value indicates a greater degree of multicollinearity, which may make it difficult to
 interpretation of individual coefficients. However, a value of 35.5 suggests that multicollinearity
 is not a major problem in this model. '''
 
 # 2.4 Prices and sizes
 
-print(data_with_size_outliers)
-
 # Let's calculate the correlation between price and volume of goods
-data_with_size_outliers['size'] = data_with_size_outliers['width'] * data_with_size_outliers["depth"] * data_with_size_outliers["height"]
-correlation = data_with_size_outliers["price"].corr(data_with_size_outliers['size'])
+analysis_data['size'] = analysis_data['width'] * analysis_data["depth"] * analysis_data["height"]
+correlation = analysis_data["price"].corr(analysis_data['size'])
 print(correlation)
 
 ''' In this case, the Pearson correlation coefficient between “price” and “size” is 
-0.7426253570189791, indicating a strong positive correlation between the two variables. 
-It means, that as the size of an object increases, the price also tends to increase, 
+indicating a strong positive correlation between the two variables. It means, 
+that as the size of an object increases, the price also tends to increase, 
 and vice versa. This indicates that the probability observing a correlation as strong 
-as 0.7426253570189791 is only due to random chance actually equal to zero. 
+as 0.8233616402808847 is only due to random chance actually equal to zero. 
 Therefore, we can conclude that there is a significant correlation between the variables 
 "price" and "size" in the data set.
     Overall, the result indicates a strong positive correlation between “price” and 
@@ -608,17 +580,17 @@ Therefore, we can conclude that there is a significant correlation between the v
 to increase. '''
 
 # Calculate 'size' and find size outliers
-z_scores = zscore(data_with_size_outliers['size'])
+z_scores = zscore(analysis_data['size'])
 outliers = (z_scores > 3)
-size_outliers_data = data_with_size_outliers[outliers]
+size_outliers_data = analysis_data[outliers]
 
 # Convert to Markdown
 size_outliers_data_markdown = size_outliers_data.to_markdown(index=False)
 print(size_outliers_data_markdown)
 
 # Remove size outliers
-size_outliers_index = data_with_size_outliers.index[outliers]
-data_without_size_outliers = data_with_size_outliers[~data_with_size_outliers.index.isin(size_outliers_index)].copy()
+size_outliers_index = analysis_data.index[outliers]
+data_without_size_outliers = analysis_data[~analysis_data.index.isin(size_outliers_index)].copy()
 
 # Convert to Markdown
 data_without_size_outliers_markdown = data_without_size_outliers.to_markdown(index=False)
@@ -673,17 +645,14 @@ print(f"Correlation between Price and Depth: {correlation_depth_price_markdown}"
 print(f"Correlation between Price and Height: {correlation_height_price_markdown}")
 
 ''' There is a strong positive correlation between “price” and “width” (correlation 
-coefficient 0.675970), which suggests that as the width of the object increases, the price 
-also tends to increase. The p value is very small (1.0419222540278884e-185), indicating that this 
-correlation is statistically significant.
+coefficient 0.77), which suggests that as the width of the object increases, the price 
+also tends to increase.
     There is a moderate positive correlation between “price” and “depth” (correlation 
-coefficient 0.418248), which suggests that as the depth of the object increases, the price 
-tends to increase. The p value is very small (8.306286324092662e-60), which suggests that this 
-correlation is also statistically significant.
+coefficient 0.64), which suggests that as the depth of the object increases, the price 
+tends to increase.
     There is a moderate positive correlation between “price” and “height” (correlation 
-coefficient 0.376293), which indicates a slight upward trend in price as the height of 
-the property increases. The p value is small (7.38600277033167e-48), which suggests that this 
-correlation is statistically significant.
+coefficient 0.23), which indicates a slight upward trend in price as the height of 
+the property increases. 
     So, "width" and "depth" are important factors in determining the price of an object, 
 while “height” has a weaker relationship with price.
     Overall, these results indicate that there is a strong positive linear relationship 
@@ -826,7 +795,7 @@ p_value = np.mean(np.abs(null_distribution) >= np.abs(observed_diff))
 print("Observed difference in mean values: {:.2f}".format(observed_diff))
 print("P-value: {:.4f}".format(p_value))
 
-''' Based on the observed mean difference of -133.75 and p-value of 0.0000, we can
+''' Based on the observed mean difference of -243.64 and p-value of 0.0000, we can
 reject the null hypothesis and conclude that there is a significant difference in the 
 price of furniture between popular and less known designers. Moreover, alternative 
 hypothesis 2 is supported, according to which furniture created by less known designers 
@@ -848,9 +817,9 @@ tukey_results = pairwise_tukeyhsd(np.concatenate([famous_prices, less_known_pric
 print(tukey_results.summary())
 
 ''' The result shows that the average difference between the "famous" group and the "less famous" group
-is 133.7527 with a p-value of 0.0. This means that the average price of products developed by well-known
+is 243.6383 with a p-value of 0.0. This means that the average price of products developed by well-known
 designers, significantly lower than the average price of products designed by less known designers.
-    The lower and upper limits of the confidence interval are 76.1586 and 191.3468, respectively.
+    The lower and upper limits of the confidence interval are 140.5739 and 346.7026, respectively.
 Since the confidence interval does not contain zero, we can reject the null hypothesis and conclude,
 that the difference in average prices between the two groups is statistically significant at the 0.05 
 significance level. '''
@@ -886,7 +855,7 @@ print("P-value: {:.4f}".format(p_value))
 
 ''' The Wilcoxon signed rank test was conducted for two samples of furniture prices (furniture from famous
 designers and furniture from less known designers) to test whether there is a significant difference
-in average prices between the two groups. The test resulted in a test statistic of 326518.00 and a p-value of 0.0000.
+in average prices between the two groups. The test resulted in a test statistic of 353068.00 and a p-value of 0.0000.
     The test statistic is the sum of the ranks assigned to the differences between each pair
 observations in two samples. The larger the test statistic, the stronger the evidence against the null.
 hypothesis which states that there is no difference between the means of two groups.
@@ -907,7 +876,7 @@ print("P-value: {:.4f}".format(p_value))
 ''' Unlike the previous test, the test statistics are based on the ranks of values in two samples, and
 not on the differences between values.
     The results of the Wilcoxon rank sum test show that there is a significant difference
-between the prices of furniture from popular and less known designers. The test statistics is -6.39,
+between the prices of furniture from popular and less known designers. The test statistics is -8.48,
 and the p-value is 0.0000, which indicates that the probability of such a random observation
 There is very little difference in the averages. Therefore, we can reject the null hypothesis and
 conclude that prices for furniture designed by popular designers differ significantly
@@ -921,7 +890,7 @@ statistic, p_value = kruskal(famous_designers_data['price'], less_known_designer
 print("Test statistic: {:.2f}".format(statistic))
 print("P-value: {:.4f}".format(p_value))
 
-''' The test statistic was calculated as 33.54 and the p-value was found to be 0.0000.
+''' The test statistic was calculated as 40.56 and the p-value was found to be 0.0000.
 This indicates that there is good reason to reject the null hypothesis.
     So, the Kruskal-Wallis test and the difference in average price values (see the first test) support
 alternative hypothesis 2. '''
@@ -1050,8 +1019,8 @@ else:
     print("There is no significant difference in average prices between seating and furniture "
           "for storage, (p = {:.3f}).".format(p_value))
 
-''' The results of the permutation test show that there is тщ significant difference between the means
-values of the groups “Furniture for seating” and “Furniture for storage”. P value is more than 0.05, which
+''' The results of the permutation test show that there is a significant difference between the average 
+prices of the groups “Furniture for seating” and “Furniture for storage”. P value is more than 0.05, which
 supports the null hypothesis of no difference. '''
 
 # 5) Tukey's honestly significant difference (HSD) test
@@ -1147,9 +1116,9 @@ else:
     print("Reject the null hypothesis. There is a significant difference in average prices.")
 
 ''' The OLS regression model shows that there is a significant difference in the average price between
-seating furniture and storage furniture with a p-value of 0.132. Coefficient of the variable “price”
+seating furniture and storage furniture with a p-value of 0.00. Coefficient of the variable “price”
 positive, indicating that seating furniture is generally more expensive than outdoor furniture
-storage However, the R-squared value is low at 0.001, indicating that the model
+storage However, the R-squared value is low at 0.022, indicating that the model
 does not explain most of the variance in the data. The model intercept test with a p-value
 supports the null hypothesis. '''
 
@@ -1170,13 +1139,28 @@ since they do not affect the price forecast.
     Additionally, we should exclude the "old_price" column since it is highly correlated with
 "price" column, and using both functions may cause multicollinearity problems. '''
 
-exclude_cols = ['item_id', 'old_price', 'price']
+exclude_cols = ['item_id', 'old_price', 'price', 'name', 'link',
+                'short_description', 'sellable_online']
 if 'index' in analysis_data.columns:
     analysis_data = analysis_data.drop('index', axis=1)
 
-num_cols = ['depth', 'height', 'width']
-cat_cols = ['name', 'category', 'designer', 'sellable_online',  'other_colors',
-            'link', 'short_description']
+median_d = analysis_data.groupby(['category'])['depth'].median()
+median_h = analysis_data.groupby(['category'])['height'].median()
+median_w = analysis_data.groupby(['category'])['width'].median()
+
+median_price = analysis_data.groupby(['category'])['price'].median()
+median_dsgn = analysis_data.groupby(['designer'])['price'].median()
+
+analysis_data = analysis_data.set_index(['category'])
+analysis_data['depth_1'] = analysis_data['depth'].fillna(median_d)
+analysis_data['height_1'] = analysis_data['height'].fillna(median_h)
+analysis_data['width_1'] = analysis_data['width'].fillna(median_w)
+analysis_data['category'] = median_price
+analysis_data = analysis_data.set_index(['designer'])
+analysis_data['designer'] = median_dsgn
+
+num_cols = ['depth_1', 'height_1', 'width_1', 'category', 'designer']
+cat_cols = ['other_colors']
 
 num_transformer = Pipeline(steps=[
     ('imputer', SimpleImputer(strategy='median')),
@@ -1214,10 +1198,10 @@ y_knn_pred = model_knn.predict(X_test)
 value because it is in the same units as the forecast and actual values. '''
 
 rmse_knn = np.sqrt(np.mean((y_knn_pred - y_test)**2))
-print('RMSE: {:.2f}'.format(rmse_knn))
+print('KNeighborsRegressor RMSE: {:.2f}'.format(rmse_knn))
 
 mse_knn = np.mean((y_knn_pred - y_test)**2)
-print('Mean Squared Error: {:.2f}'.format(mse_knn))
+print('KNeighborsRegressor Mean Squared Error: {:.2f}'.format(mse_knn))
 
 # 2) LinearRegression
 model_regression = Pipeline(steps=[
@@ -1230,10 +1214,10 @@ model_regression.fit(X_train, y_train)
 y_regression_pred = model_regression.predict(X_test)
 
 rmse_regression = np.sqrt(np.mean((y_regression_pred - y_test)**2))
-print('RMSE: {:.2f}'.format(rmse_regression))
+print('LinearRegression RMSE: {:.2f}'.format(rmse_regression))
 
 mse_regression = np.mean((y_regression_pred - y_test)**2)
-print('Mean Squared Error: {:.2f}'.format(mse_regression))
+print('LinearRegression Mean Squared Error: {:.2f}'.format(mse_regression))
 
 """ The linear regression model performs slightly better than the K-nearest neighbors 
 algorithm with in terms of RMSE and root mean square error, indicating that on average it gives
@@ -1250,10 +1234,10 @@ model_tree_regression.fit(X_train, y_train)
 y_tree_regression_pred = model_tree_regression.predict(X_test)
 
 rmse_tree_regression = np.sqrt(np.mean((y_tree_regression_pred - y_test)**2))
-print('RMSE: {:.2f}'.format(rmse_tree_regression))
+print('DecisionTreeRegressor RMSE: {:.2f}'.format(rmse_tree_regression))
 
 mse_tree_regression = np.mean((y_tree_regression_pred - y_test)**2)
-print('Mean Squared Error: {:.2f}'.format(mse_tree_regression))
+print('DecisionTreeRegressor Mean Squared Error: {:.2f}'.format(mse_tree_regression))
 
 # Let's configure the DecisionTreeRegressor hyperparameters:
 param_grid = {
@@ -1272,13 +1256,13 @@ grid_search = GridSearchCV(
 
 grid_search.fit(X_train, y_train)
 
-print('Best hyperparameters:', grid_search.best_params_)
-print('Best score:', grid_search.best_score_)
+print('DecisionTreeRegressor Best examples hyperparameters:', grid_search.best_params_)
+print('DecisionTreeRegressor Best examples score:', grid_search.best_score_)
 
 # DecisionTreeRegressor with customized hyperparameters
 best_params = {
-    'max_depth': 36,
-    'min_samples_leaf': 8,
+    'max_depth': 20,
+    'min_samples_leaf': 2,
     'min_samples_split': 2,
     'splitter': 'best'
 }
@@ -1293,10 +1277,10 @@ model_best_tree_regression.fit(X_train, y_train)
 y_best_tree_regression_pred = model_best_tree_regression.predict(X_test)
 
 rmse_best_tree_regression = np.sqrt(np.mean((y_best_tree_regression_pred - y_test)**2))
-print('RMSE: {:.2f}'.format(rmse_best_tree_regression))
+print('DecisionTreeRegressor Best Params RMSE: {:.2f}'.format(rmse_best_tree_regression))
 
 mse_best_tree_regression = np.mean((y_best_tree_regression_pred - y_test)**2)
-print('Mean Squared Error: {:.2f}'.format(mse_best_tree_regression))
+print('DecisionTreeRegressor Best Params Mean Squared Error: {:.2f}'.format(mse_best_tree_regression))
 
 ''' The results show that the decision tree regressor has higher MSE and RMSE than
 linear regression, which indicates that the decision tree model has a lower
@@ -1318,10 +1302,10 @@ model_elasticnet.fit(X_train, y_train)
 y_elasticnet_pred = model_elasticnet.predict(X_test)
 
 rmse_elasticnet = np.sqrt(np.mean((y_elasticnet_pred - y_test)**2))
-print('RMSE: {:.2f}'.format(rmse_elasticnet))
+print('ElasticNet RMSE: {:.2f}'.format(rmse_elasticnet))
 
 mse_elasticnet = np.mean((y_elasticnet_pred - y_test)**2)
-print('Mean Squared Error: {:.2f}'.format(mse_elasticnet))
+print('ElasticNet Mean Squared Error: {:.2f}'.format(mse_elasticnet))
 
 # Let's configure ElasticNet hyperparameters:
 param_grid = {
@@ -1339,8 +1323,8 @@ grid_search = GridSearchCV(
 
 grid_search.fit(X_train, y_train)
 
-print('Best hyperparameters:', grid_search.best_params_)
-print('Best score:', grid_search.best_score_)
+print('ElasticNet Best examples hyperparameters:', grid_search.best_params_)
+print('ElasticNet Best examples score:', grid_search.best_score_)
 
 # ElasticNet with tuned hyperparameters
 best_params = {
@@ -1358,10 +1342,10 @@ model_best_elasticnet.fit(X_train, y_train)
 y_best_elasticnet_pred = model_best_elasticnet.predict(X_test)
 
 rmse_best_elasticnet = np.sqrt(np.mean((y_best_elasticnet_pred - y_test)**2))
-print('RMSE: {:.2f}'.format(rmse_best_elasticnet))
+print('ElasticNet Besr Params RMSE: {:.2f}'.format(rmse_best_elasticnet))
 
 mse_best_elasticnet = np.mean((y_best_elasticnet_pred - y_test)**2)
-print('Mean Squared Error: {:.2f}'.format(mse_best_elasticnet))
+print('ElasticNet Besr Params Mean Squared Error: {:.2f}'.format(mse_best_elasticnet))
 
 ''' The ElasticNet model performed the worst because it has a more complex approach
 to regularization compared to other models used in this analysis, which could lead to
@@ -1389,10 +1373,10 @@ model_polynomial.fit(X_train, y_train)
 y_polynomial_pred = model_polynomial.predict(X_test)
 
 rmse_polynomial = np.sqrt(np.mean((y_polynomial_pred - y_test)**2))
-print('RMSE: {:.2f}'.format(rmse_polynomial))
+print('Linear Regression with Polynomial Features RMSE: {:.2f}'.format(rmse_polynomial))
 
 mse_polynomial = np.mean((y_polynomial_pred - y_test)**2)
-print('Mean Squared Error: {:.2f}'.format(mse_polynomial))
+print('Linear Regression with Polynomial Features Mean Squared Error: {:.2f}'.format(mse_polynomial))
 
 """ A linear regression model with polynomial functions performs slightly better than
 other models in terms of RMSE and root mean square error, indicating that
@@ -1409,10 +1393,10 @@ model_rf.fit(X_train, y_train)
 y_rf_pred = model_rf.predict(X_test)
 
 rmse_rf = np.sqrt(np.mean((y_rf_pred - y_test)**2))
-print('RMSE: {:.2f}'.format(rmse_rf))
+print('RandomForestRegressor RMSE: {:.2f}'.format(rmse_rf))
 
 mse_rf = np.mean((y_rf_pred - y_test)**2)
-print('Mean Squared Error: {:.2f}'.format(mse_rf))
+print('RandomForestRegressor Mean Squared Error: {:.2f}'.format(mse_rf))
 
 ''' The results show that the random forest model performs worse than the
 polynomial regression, in terms of RMSE and root mean square error. '''
@@ -1428,10 +1412,10 @@ model_gradientboost.fit(X_train, y_train)
 y_gradientboost_pred = model_gradientboost.predict(X_test)
 
 rmse_gradientboost = np.sqrt(np.mean((y_gradientboost_pred - y_test)**2))
-print('RMSE: {:.2f}'.format(rmse_gradientboost))
+print('GradientBoostingRegressor RMSE: {:.2f}'.format(rmse_gradientboost))
 
 mse_gradientboost = np.mean((y_gradientboost_pred - y_test)**2)
-print('Mean Squared Error: {:.2f}'.format(mse_gradientboost))
+print('GradientBoostingRegressor Mean Squared Error: {:.2f}'.format(mse_gradientboost))
 
 ''' The results show that the GradientBoostingRegressor model does not perform as well as
 like some other models tested (like LinearRegression and KNeighborsRegressor). '''
@@ -1447,10 +1431,10 @@ model_adaboost.fit(X_train, y_train)
 y_adaboost_pred = model_adaboost.predict(X_test)
 
 rmse_adaboost = np.sqrt(np.mean((y_adaboost_pred - y_test)**2))
-print('RMSE: {:.2f}'.format(rmse_adaboost))
+print('GradientBoostingRegressor RMSE: {:.2f}'.format(rmse_adaboost))
 
 mse_adaboost = np.mean((y_adaboost_pred - y_test)**2)
-print('Mean Squared Error: {:.2f}'.format(mse_adaboost))
+print('GradientBoostingRegressor Mean Squared Error: {:.2f}'.format(mse_adaboost))
 
 ''' Compared to other models trained on the same dataset, AdaBoostRegressor
 performs worse than some models such as LinearRegression, PolynomialFeatures,
@@ -1469,10 +1453,10 @@ model_xgb.fit(X_train, y_train)
 y_xgb_pred = model_xgb.predict(X_test)
 
 rmse_xgb = np.sqrt(np.mean((y_xgb_pred - y_test)**2))
-print('RMSE: {:.2f}'.format(rmse_xgb))
+print('XGBRegressor RMSE: {:.2f}'.format(rmse_xgb))
 
 mse_xgb = np.mean((y_xgb_pred - y_test)**2)
-print('Mean Squared Error: {:.2f}'.format(mse_xgb))
+print('XGBRegressor Mean Squared Error: {:.2f}'.format(mse_xgb))
 
 # A lower MSE value indicates a better fit of the model to the data.
 
@@ -1487,10 +1471,10 @@ model_bagging.fit(X_train, y_train)
 y_bagging_pred = model_bagging.predict(X_test)
 
 rmse_bagging = np.sqrt(np.mean((y_bagging_pred - y_test)**2))
-print('RMSE: {:.2f}'.format(rmse_bagging))
+print('BaggingRegressor RMSE: {:.2f}'.format(rmse_bagging))
 
 mse_bagging = np.mean((y_bagging_pred - y_test)**2)
-print('Mean Squared Error: {:.2f}'.format(mse_bagging))
+print('BaggingRegressor Mean Squared Error: {:.2f}'.format(mse_bagging))
 
 ''' The results show that the BaggingRegressor model performs slightly better than 
 many others models, in terms of RMSE and root mean square error. '''
@@ -1535,10 +1519,10 @@ model_blending.fit(X_train, y_train)
 y_blending_pred = model_blending.predict(X_test)
 
 rmse_blending = np.sqrt(np.mean((y_blending_pred - y_test) ** 2))
-print('RMSE: {:.2f}'.format(rmse_blending))
+print('BlendingRegressor RMSE: {:.2f}'.format(rmse_blending))
 
 mse_blending = np.mean((y_blending_pred - y_test) ** 2)
-print('Mean Squared Error: {:.2f}'.format(mse_blending))
+print('BlendingRegressor Mean Squared Error: {:.2f}'.format(mse_blending))
 
 # A lower MSE value indicates a better fit of the model to the data.
 # This is the one of the best models.
@@ -1554,10 +1538,10 @@ model_hist_gb.fit(X_train, y_train)
 y_hist_gb_pred = model_hist_gb.predict(X_test)
 
 rmse_hist_gb = np.sqrt(np.mean((y_hist_gb_pred - y_test)**2))
-print('RMSE: {:.2f}'.format(rmse_hist_gb))
+print('HistGradientBoostingRegressor RMSE: {:.2f}'.format(rmse_hist_gb))
 
 mse_hist_gb = np.mean((y_hist_gb_pred - y_test)**2)
-print('Mean Squared Error: {:.2f}'.format(mse_hist_gb))
+print('HistGradientBoostingRegressor Mean Squared Error: {:.2f}'.format(mse_hist_gb))
 
 # A lower MSE value indicates a better fit of the model to the data.
 
@@ -1653,27 +1637,26 @@ neg_mse_scores_bagging = cross_val_score(model_bagging, analysis_data.drop(exclu
 mse_scores_bagging = -neg_mse_scores_bagging
 mse_mean_bagging = mse_scores_bagging.mean()
 
-print('RMSE: {:.2f}'.format(np.sqrt(mse_mean_bagging)))
-print('MSE: {:.2f}'.format(mse_mean_bagging))
+print('Cross-Validation RMSE Scores (BaggingRegressor): {:.2f}'.format(np.sqrt(mse_mean_bagging)))
+print('Mean RMSE (BaggingRegressor): {:.2f}'.format(mse_mean_bagging))
 
-'''
-Additional Cross-Validations:
+# Additional Cross-Validations:
 
-# F) Cross Validation for RandomForestRegressor
+# 1) Cross Validation for RandomForestRegressor
 cv_rf_regression = KFold(n_splits=5, shuffle=True, random_state=42)
 # Or
 # cv_rf_regression = ShuffleSplit(n_splits=5, test_size=0.2, random_state=42)
 neg_mse_scores_rf_regression = cross_val_score(model_rf, analysis_data.drop(exclude_cols, axis=1),
                                  analysis_data['price'], cv=cv_rf_regression, scoring='neg_mean_squared_error')
 
-print('RMSE: {:.2f}'.format(np.sqrt(-neg_mse_scores_rf_regression.mean())))
+print('Cross-Validation RMSE Scores (RandomForestRegressor): {:.2f}'.format(np.sqrt(-neg_mse_scores_rf_regression.mean())))
 
 mse_scores_rf_regression = -neg_mse_scores_rf_regression
 mse_mean_rf_regression = mse_scores_rf_regression.mean()
 
-print('MSE: {:.2f}'.format(mse_mean_rf_regression))
+print('Mean RMSE (RandomForestRegressor): {:.2f}'.format(mse_mean_rf_regression))
 
-# G) Cross Validation for HistGradientBoostingRegressor
+# 2) Cross Validation for HistGradientBoostingRegressor
 cv_hist_gb = KFold(n_splits=5, shuffle=True, random_state=42)
 # Or
 # cv_hist_gb = ShuffleSplit(n_splits=5, test_size=0.2, random_state=42)
@@ -1683,15 +1666,14 @@ neg_mse_scores_hist_gb = cross_val_score(model_hist_gb, analysis_data.drop(exclu
 mse_scores_hist_gb = -neg_mse_scores_hist_gb
 mse_mean_hist_gb = mse_scores_hist_gb.mean()
 
-print('RMSE: {:.2f}'.format(np.sqrt(mse_mean_hist_gb)))
-print('MSE: {:.2f}'.format(mse_mean_hist_gb))
-'''
+print('Cross-Validation RMSE Scores (HistGradientBoostingRegressor): {:.2f}'.format(np.sqrt(mse_mean_hist_gb)))
+print('Mean RMSE (HistGradientBoostingRegressor): {:.2f}'.format(mse_mean_hist_gb))
 
 # 1) KNeighborsRegressor
 # 2) LinearRegression
 # 3) DecisionTreeRegressor with tuned hyperparameters
 # 4) ElasticNet with tuned hyperparameters
-# 6) RandomForestRegressor
+# 5) Linear Regression with Polynomial Features
 # 7) GradientBoostingRegressor
 # 8) AdaBoostRegressor
 # 12) HistGradientBoostingRegressor
@@ -1699,7 +1681,7 @@ print('MSE: {:.2f}'.format(mse_mean_hist_gb))
 models = [
     ('KNN Regressor', y_knn_pred, 'red'),
     ('Linear Regression', y_regression_pred, 'pink'),
-    ('RandomForestRegressor', y_rf_pred, 'green'),
+    ('PolynomialFeatures', y_polynomial_pred, 'green'),
     ('DecisionTreeRegressor', y_best_tree_regression_pred, 'blue'),
     ('ElasticNetRegressor', y_best_elasticnet_pred, 'orange'),
     ('GradientBoostingRegressor', y_gradientboost_pred, 'brown'),
@@ -1736,13 +1718,13 @@ ax.legend()
 plt.show()
 
 # Four best models:
-# 5) Linear Regression with Polynomial Features
+# 6) RandomForestRegressor
 # 9) xgb.XGBRegressor
 # 10) BaggingRegressor
 # 11) BlendingRegressor
 
 best_models = [
-    ('PolynomialFeatures', y_polynomial_pred, 'blue'),
+    ('RandomForestRegressor', y_rf_pred, 'green'),
     ('BaggingRegressor', y_bagging_pred, 'purple'),
     ('XGBoost Regressor', y_xgb_pred, 'brown'),
     ('BlendingRegressor', y_blending_pred, 'gray')
@@ -1788,7 +1770,9 @@ fig.suptitle('Regression models by frequency (ax y) of errors(ax x)')
 plt.tight_layout()
 plt.show()
 
-# Visualization of cross-validation of the best model - xgb.XGBRegressor
+# Visualizations of cross-validation
+
+# 1) Visualization of cross-validation of the best model - xgb.XGBRegressor
 fig, ax = plt.subplots(figsize=(8, 4))
 
 ax.barh(range(len(rmse_scores_xgb_regression)), rmse_scores_xgb_regression, color='brown')
@@ -1808,29 +1792,7 @@ plt.gca().grid(False)
 
 plt.show()
 
-# Visualization of cross-validation of the Linear Regression with Polynomial Features
-fig, ax = plt.subplots(figsize=(8, 4))
-
-ax.barh(range(len(mse_scores_polynomial)), np.sqrt(mse_scores_polynomial), color='blue')
-ax.set_yticks(range(len(mse_scores_polynomial)))
-ax.set_yticklabels(['Fold {}'.format(i+1) for i in range(len(mse_scores_polynomial))])
-plt.axvline(np.sqrt(mse_mean_polynomial), color='y', linestyle='dashed', linewidth=2.5,
-            label=f"RMSE: {round(np.sqrt(mse_mean_polynomial))}")
-
-for i, v in enumerate(mse_scores_polynomial):
-    plt.text(np.sqrt(v)+7, i, f"{round(np.sqrt(v))}", ha='left', va='center', color="black", fontsize=12,
-             bbox=dict(facecolor='orange', edgecolor='pink', boxstyle='round4,pad=0.4'))
-
-ax.set_xlim(0, np.sqrt(mse_scores_polynomial).max() * 1.225)
-plt.xlabel('RMSE')
-plt.ylabel('Fold')
-plt.title('Cross-validation results of Linear Regression with Polynomial Features')
-plt.legend(loc='upper right', fontsize=13)
-plt.gca().grid(False)
-
-plt.show()
-
-# Visualization of cross-validation of the BlendingRegressor
+# 2) Visualization of cross-validation of the BlendingRegressor
 fig, ax = plt.subplots(figsize=(8, 4))
 
 ax.barh(range(len(mse_scores_blending)), np.sqrt(mse_scores_blending), color='grey')
@@ -1852,7 +1814,7 @@ plt.gca().grid(False)
 
 plt.show()
 
-# Visualization of cross-validation - BaggingRegressor
+# 3) Visualization of cross-validation - BaggingRegressor
 fig, ax = plt.subplots(figsize=(8, 4))
 
 ax.barh(range(len(mse_scores_bagging)), np.sqrt(mse_scores_bagging), color='purple')
@@ -1872,9 +1834,9 @@ plt.gca().grid(False)
 
 plt.show()
 
-''' 
-Additional visualization
-# Visualization of cross-validation of the RandomForestRegressor
+# Additional visualizations
+
+# 1) Visualization of cross-validation of the RandomForestRegressor
 fig, ax = plt.subplots(figsize=(8, 4))
 
 ax.barh(range(len(mse_scores_rf_regression)), np.sqrt(mse_scores_rf_regression), color='green')
@@ -1893,7 +1855,28 @@ plt.legend(loc='upper right', fontsize=13)
 plt.gca().grid(False)
 
 plt.show()
-'''
+
+# 2) Visualization of cross-validation of the Linear Regression with Polynomial Features
+fig, ax = plt.subplots(figsize=(8, 4))
+
+ax.barh(range(len(mse_scores_polynomial)), np.sqrt(mse_scores_polynomial), color='blue')
+ax.set_yticks(range(len(mse_scores_polynomial)))
+ax.set_yticklabels(['Fold {}'.format(i+1) for i in range(len(mse_scores_polynomial))])
+plt.axvline(np.sqrt(mse_mean_polynomial), color='y', linestyle='dashed', linewidth=2.5,
+            label=f"RMSE: {round(np.sqrt(mse_mean_polynomial))}")
+
+for i, v in enumerate(mse_scores_polynomial):
+    plt.text(np.sqrt(v)+7, i, f"{round(np.sqrt(v))}", ha='left', va='center', color="black", fontsize=12,
+             bbox=dict(facecolor='orange', edgecolor='pink', boxstyle='round4,pad=0.4'))
+
+ax.set_xlim(0, np.sqrt(mse_scores_polynomial).max() * 1.225)
+plt.xlabel('RMSE')
+plt.ylabel('Fold')
+plt.title('Cross-validation results of Linear Regression with Polynomial Features')
+plt.legend(loc='upper right', fontsize=13)
+plt.gca().grid(False)
+
+plt.show()
 
 ''' All models are evaluated using cross-validation with the KFold(5) strategy,
 shuffling the data and using negative root mean square error as the evaluation metric.
